@@ -54,12 +54,31 @@ int main(){
         }
     }
     else{
-        std::cout << "ConfigFile is not present";
-        std::ofstream versiontoolFile(".versiontool"); // create file
+        // std::cout << "ConfigFile is not present";
+        // std::ofstream versiontoolFile(".versiontool"); // create file
         
-        if(std::system("cmd /c code .versiontool") != 0){
-            std::system("cmd /c notepad .versiontool");
+        // if(std::system("cmd /c code .versiontool") != 0){
+        //     std::system("cmd /c notepad .versiontool");
+        // }
+
+        // std::vector<char> currentdirArray[100];
+        std::string currentdirArray[500];
+
+        int i = 1;
+        for(const auto& entry : std::filesystem::directory_iterator(".")){
+            if(entry.is_regular_file()){
+                std::cout << "[" << i << "]" << "  " << entry << std::endl;
+                std::string item = entry.path().generic_string();
+                currentdirArray[i] = item;
+                i++;
+            }
+            // currentdirArray[i].push_back(entry);
         }
+        std::cout << "Array: " << currentdirArray[1] << std::endl << currentdirArray[2] << std::endl << currentdirArray[3] << std::endl;
+        std::cout << "Select Files to be included in the Release: ";
+
+        std::string userinput;
+        std::cin >> userinput;
     }
     
     return 0;
