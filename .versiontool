@@ -1,0 +1,9 @@
+Files included in release:
+File nummero 1
+File nummero 2
+File nummero 3
+File/nummero/4
+File nummero 5
+----------
+Compile command:
+g++ hello
