@@ -107,17 +107,11 @@ int main(){
         std::string userResponse;
 
         // Filter input
-        int proceedQuestion = 0;
-        while(proceedQuestion != 1){
+        while(userResponse != "1" && userResponse != "2" || userResponse.size() != 1){
+            std::cout << "Invalid Input, Please try again: ";
             // std::cin.clear();
             // std::cin.ignore(SIZE_MAX, '\n');
             std::cin >> userResponse;
-            if(userResponse == "1" || userResponse == "2" && userResponse.size() == 1){
-                proceedQuestion = 1;
-            }
-            else{
-                std::cerr << "Invalid Input, Please try again: ";
-            }
         }
         if(userResponse == "1"){
             int filesystemCheck = 0;
@@ -129,7 +123,7 @@ int main(){
                 std::string versionNamePath = ".\\Versions\\" + versionName;
                 
                 if(!std::filesystem::exists(versionNamePath)){
-                    // std::cout << "Directory does not exist yet" << std::endl;
+                    std::cout << "Directory does not exist yet";
                     filesystemCheck = 1;    
                 }
                 else{
@@ -150,8 +144,8 @@ int main(){
                     debugQuestion = 1;
                 }
                 else if(debugAnswer == "2"){
-                    debugVersion = 0;
-                    debugQuestion = 1;
+                    debugVersion == 0;
+                    debugQuestion == 1;
                 }
                 else{
                     std::cerr << "Error: Invalid Answer, Please try again:" << std::endl;
@@ -187,8 +181,8 @@ int main(){
             }
             
             // Create version directory, copy to Backup-Archive and move compiled program to version directory
-            const std::string versionDir = "Versions\\" + versionName;
-            const std::string versionDirBackup = "Versions\\" + versionName + "\\" + "Backup-Archive";
+            const std::string versionDir = currentDir.generic_string() + "\\" + "Versions" + "\\" + versionName;
+            const std::string versionDirBackup = currentDir.generic_string() + "\\" + "Versions" + "\\" + versionName + "\\" + "Backup-Archive";
 
             try{
                 std::filesystem::create_directories(versionDir);
@@ -201,9 +195,9 @@ int main(){
             if(debugVersion == 0){
                 const std::string exeName = currentDir.generic_string() + "-" + versionName + ".exe";
                 try{
-                    std::filesystem::copy(exeName, versionDirBackup + "\\" + exeName);
+                    std::filesystem::copy(exeName, versionDirBackup);
 
-                    std::filesystem::rename(exeName, versionDir + "\\" + exeName);
+                    std::filesystem::rename(exeName, versionDir);
                 }
                 catch(std::filesystem::filesystem_error& renameDirError){
                     throw std::runtime_error(renameDirError);
@@ -213,27 +207,25 @@ int main(){
                 const std::string exeNameRelease = currentDir.generic_string() + "-" + versionName + "_Release.exe";
                 const std::string exeNameDebug = currentDir.generic_string() + "-" + versionName + "_Debug.exe";
                 try{
-                    std::filesystem::copy(exeNameRelease, versionDirBackup + "\\" + exeNameRelease);
-                    std::filesystem::copy(exeNameDebug, versionDirBackup + "\\" + exeNameDebug);
+                    std::filesystem::copy(exeNameRelease, versionDirBackup);
+                    std::filesystem::copy(exeNameDebug, versionDirBackup);
                     
-                    std::filesystem::rename(exeNameRelease, versionDir + "\\" + exeNameRelease);
-                    std::filesystem::rename(exeNameDebug, versionDir + "\\" + exeNameDebug);
+                    std::filesystem::rename(exeNameRelease, versionDir);
+                    std::filesystem::rename(exeNameDebug, versionDir);
                 }
                 catch(std::filesystem::filesystem_error& renameDirError){
                     throw std::runtime_error(renameDirError);
                 }
             }
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+
             // Copy vector items to version directory and to backup-archive
             for(const auto& item : fileVector){
-                // of type filesystem::path then you can use xxx.parent_path to get the last bit for each path to add to the end of the destination
                 if(std::filesystem::exists(item)){
                     try{
-                        std::filesystem::copy(item, versionDir + "\\" + item);
-                        std::filesystem::copy(item, versionDirBackup + "\\" + item);
+                        std::filesystem::copy(item, versionDir);
+                        std::filesystem::copy(item, versionDirBackup);
                     }
                     catch(std::filesystem::filesystem_error& itemCopyError){
-                        std::cerr << "Line 237";
                         throw std::runtime_error(itemCopyError);
                     }
                 }

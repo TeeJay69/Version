@@ -1,9 +1,9 @@
-Files included in release:
-File nummero 1
-File nummero 2
-File nummero 3
-File/nummero/4
-File nummero 5
+Files and directories included in version:
+test.cpp
+testdir\thisisatest.txt
+testdir\hello.cpp
+testdir\copythis
+C:\program files\test.exe
 ----------
 Compile command:
-g++ hello
+g++ test.cpp

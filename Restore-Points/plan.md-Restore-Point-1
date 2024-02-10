@@ -22,7 +22,3 @@ Compile the program and move all files from filearray + the compiled program to 
     - Call to command line
     - 
 Copy everything to a backup directory inside the release directory
-- Check if item is a path or a filename
-    - If its a directory
-        - Copy the directory
-    - If its a file, copy the file
