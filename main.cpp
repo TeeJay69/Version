@@ -227,6 +227,8 @@ int main(){
             // Copy vector items to version directory and to backup-archive
             for(const auto& item : fileVector){
                 // of type filesystem::path then you can use xxx.parent_path to get the last bit for each path to add to the end of the destination
+                    // for (const auto& p : paths) {
+                    // std::cout << "Last directory in path: " << p.parent_path().filename() << std::endl;
                 if(std::filesystem::exists(item)){
                     try{
                         std::filesystem::copy(item, versionDir + "\\" + item);
