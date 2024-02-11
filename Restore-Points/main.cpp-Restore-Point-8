@@ -204,7 +204,7 @@ int main(){
 
             // Compile the program
             if(debugVersion == 0){
-                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + ".exe"; // " -O3" + " -march=native"
+                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + ".exe" + " -O3" + " -march=native";
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0){
                     std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
@@ -215,8 +215,8 @@ int main(){
                 }
             }
             else if(debugVersion == 1){
-                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Release.exe" + " -DDebug"; // " -O3" + " -march=native"
-                const std::string buildDebugVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Debug.exe" + " -DDebug"; // " -O3" + " -march=native"
+                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Release.exe" + " -DDebug" + " -O3" + " -march=native";
+                const std::string buildDebugVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Debug.exe" " -DDebug" + " -O3" + " -march=native";
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0 && std::system((buildDebugVersion).c_str()) == 0){
                     std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;

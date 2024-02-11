@@ -23,21 +23,6 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#ifdef _WIN32
-
-#include <Windows.h>
-
-void enableColors()
-{
-    DWORD consoleMode;
-    HANDLE outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (GetConsoleMode(outputHandle, &consoleMode))
-    {
-        SetConsoleMode(outputHandle, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    }
-}
-
-#endif
 
 class ConfigFileNames{
     private:
@@ -65,16 +50,14 @@ class ConfigFileNames{
 
 int main(){ 
 
-    enableColors();
     if(std::filesystem::exists(".versiontool")){
-        if(Debug_Mode){std::cout << "ConfigFile is present" << std::endl;}
+        std::cout << "ConfigFile is present" << std::endl;
 
         std::ifstream versiontoolFile(".versiontool");
 
         std::string line;
         std::vector<std::string> fileVector;
         std::string compileConfig; // for later
-        std::string aliasConfig; // for later
 
         int configParser = 1;
         while(configParser == 1){
@@ -93,11 +76,9 @@ int main(){
                             std::getline(versiontoolFile, line);
 
                             if(line.find("rmdir ") == std::string::npos && line.find("rd ") == std::string::npos && line.find("-o ") == std::string::npos && line.find("del ") == std::string::npos && line.find("rm ") == std::string::npos && line.find("move ") == std::string::npos && line.find("mv ") == std::string::npos){
-                                if(line.empty()){
-                                    throw std::runtime_error("Error: Compile command is empty!");
-                                }
-
                                 compileConfig = line;
+                                configParser = 0;
+                                break;
                             }
                             else{
                                 // std::cerr << "Error: Compile Command contains forbidden words!";
@@ -106,18 +87,6 @@ int main(){
                         }
                         else{
                             throw std::runtime_error("Error compile command not found");
-                        }
-
-                        // Get alias name
-                        std::getline(versiontoolFile, line);
-                        if(line == "----------"){
-                            std::getline(versiontoolFile, line);
-                            if(line == "Alias:"){
-                                std::getline(versiontoolFile, line);
-                                aliasConfig = line;
-                                configParser = 0;
-                                break;
-                            }
                         }
                     }
                     else if(delimiterHit == 0){
@@ -138,31 +107,29 @@ int main(){
         for(int i = 0; i < fileVector.size(); i++){
             std::cout << "[" << i + 1 << "]" << "  " << fileVector[i] << std::endl;
         }
-        std::cout << std::endl;
-        // std::cout << std::endl << "Do You Want to Proceed? (yes=1, no=2): ";
-        // std::string userResponse;
+        std::cout << std::endl << "Do You Want to Proceed? (yes=1, no=2): ";
+        std::string userResponse;
 
-        // // Filter input
-        // int proceedQuestion = 0;
-        // while(proceedQuestion != 1){
-        //     // std::cin.clear();
-        //     // std::cin.ignore(SIZE_MAX, '\n');
-        //     std::cin >> userResponse;
-        //     if(userResponse == "1" || userResponse == "2" && userResponse.size() == 1){
-        //         proceedQuestion = 1;
-        //     }
-        //     else{
-        //         std::cerr << "Invalid Input, Please try again: ";
-        //     }
-        // }
-        int userResponse = 1;
-        if(userResponse == 1){
+        // Filter input
+        int proceedQuestion = 0;
+        while(proceedQuestion != 1){
+            // std::cin.clear();
+            // std::cin.ignore(SIZE_MAX, '\n');
+            std::cin >> userResponse;
+            if(userResponse == "1" || userResponse == "2" && userResponse.size() == 1){
+                proceedQuestion = 1;
+            }
+            else{
+                std::cerr << "Invalid Input, Please try again: ";
+            }
+        }
+        if(userResponse == "1"){
             int filesystemCheck = 0;
             // Get version name
             std::string versionName; // for later
             while(filesystemCheck != 1){
                 std::cout << ANSI_COLOR_GREEN << "Version Name: " << ANSI_COLOR_RESET << std::endl;
-                std::getline(std::cin, versionName);
+                std::cin >> versionName;
                 std::string versionNamePath = ".\\Versions\\" + versionName;
                 
                 if(!std::filesystem::exists(versionNamePath)){
@@ -170,10 +137,6 @@ int main(){
                     filesystemCheck = 1;    
                 }
                 else{
-                    if(versionName.empty()){
-                        std::cerr << "Error: Please Enter a Version Name!" << std::endl;
-                        continue;                       
-                    }
                     std::string versionNameError = "Error: \"" + versionName + "\" already exists \n\n";
                     std::cerr << versionNameError;
                 }
@@ -183,14 +146,14 @@ int main(){
             int debugQuestion = 0;
             int debugVersion; // for compile command
             while(debugQuestion != 1){
-                std::cout << ANSI_COLOR_GREEN << "Include a debug version in the release? (no=1, yes=2) [default: no]: " << ANSI_COLOR_RESET << std::endl;
+                std::cout << ANSI_COLOR_GREEN << "Would you like to include a debug version in the release? (no=1, yes=2): " << ANSI_COLOR_RESET << std::endl;
                 std::string debugAnswer;
-                std::getline(std::cin, debugAnswer);
-                if(debugAnswer == "2" | debugAnswer == "yes"){
+                std::cin >> debugAnswer;
+                if(debugAnswer == "2"){
                     debugVersion = 1;
                     debugQuestion = 1;
                 }
-                else if(debugAnswer == "1" || debugAnswer.empty() || debugAnswer == "no"){
+                else if(debugAnswer == "1"){
                     debugVersion = 0;
                     debugQuestion = 1;
                 }
@@ -204,7 +167,7 @@ int main(){
 
             // Compile the program
             if(debugVersion == 0){
-                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + ".exe"; // " -O3" + " -march=native"
+                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + ".exe" + " -O3" + " -march=native";
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0){
                     std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
@@ -215,8 +178,8 @@ int main(){
                 }
             }
             else if(debugVersion == 1){
-                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Release.exe" + " -DDebug"; // " -O3" + " -march=native"
-                const std::string buildDebugVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Debug.exe" + " -DDebug"; // " -O3" + " -march=native"
+                const std::string buildReleaseVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Release.exe" + " -DDebug" + " -O3" + " -march=native";
+                const std::string buildDebugVersion = "cmd /c " + compileConfig + " -o " + currentDir.generic_string() + "-" + versionName + "_Debug.exe" " -DDebug" + " -O3" + " -march=native";
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0 && std::system((buildDebugVersion).c_str()) == 0){
                     std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
@@ -230,8 +193,6 @@ int main(){
             // Create version directory, copy to Backup-Archive and move compiled program to version directory
             const std::string versionDir = "Versions\\" + versionName;
             const std::string versionDirBackup = "Versions\\" + versionName + "\\" + "Backup-Archive";
-            std::string exeNameForAlias;
-            std::string exeNameReleaseForAlias;
 
             try{
                 std::filesystem::create_directories(versionDir);
@@ -246,12 +207,11 @@ int main(){
                 try{
                     std::filesystem::copy(exeName, versionDirBackup + "\\" + exeName);
 
-                    std::filesystem::rename(exeName, versionDir + "\\" + exeName); // move
+                    std::filesystem::rename(exeName, versionDir + "\\" + exeName);
                 }
                 catch(std::filesystem::filesystem_error& renameDirError){
                     throw std::runtime_error(renameDirError);
                 }
-                exeNameForAlias = exeName;
             }
             else if(debugVersion == 1){
                 const std::string exeNameRelease = currentDir.generic_string() + "-" + versionName + "_Release.exe";
@@ -265,29 +225,6 @@ int main(){
                 }
                 catch(std::filesystem::filesystem_error& renameDirError){
                     throw std::runtime_error(renameDirError);
-                }
-                exeNameReleaseForAlias = exeNameRelease;
-            }
-
-            // Create alias file
-            if(!aliasConfig.empty()){
-                std::string aliasFileVersionPath = versionDir + "\\" + aliasConfig + ".bat";
-                std::string aliasFileBackupPath = versionDirBackup + "\\" + aliasConfig + ".bat";
-                std::ofstream aliasFile(aliasFileVersionPath);
-                std::ofstream aliasFileBackup(aliasFileBackupPath);
-                
-                if(aliasFile.is_open() && aliasFileBackup.is_open()){
-                    if(debugVersion == 0){
-                        aliasFile << exeNameForAlias << " %*";
-                        aliasFileBackup << exeNameForAlias << " %*";
-                    }
-                    else{
-                        aliasFile << exeNameReleaseForAlias << " %*";
-                        aliasFileBackup << exeNameReleaseForAlias << " %*";
-                    }
-                    
-                    aliasFile.close();
-                    aliasFileBackup.close();
                 }
             }
 
@@ -385,7 +322,7 @@ int main(){
     else{
         std::ofstream configFile(".versiontool"); // create file
         if(configFile.is_open()){
-            configFile << "Files and directories included in version:\n\n----------\nCompile command:\n\n----------\nAlias:\n\n----------";
+            configFile << "Files and directories included in version:\n\n----------\nCompile command:\n\n----------";
             configFile.close();
 
             if(std::system("cmd /c code .versiontool") != 0){
