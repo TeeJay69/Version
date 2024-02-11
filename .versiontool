@@ -3,7 +3,8 @@ test.cpp
 testdir\thisisatest.txt
 testdir\hello.cpp
 testdir\copythis
-C:\program files\test.exe
+C:\Backup\NAS\Archives-websites\websites-2024-01-06\Bookmarks
+C:\Data\TW\Software\Coding\versiontool\testxp
 ----------
 Compile command:
 g++ test.cpp

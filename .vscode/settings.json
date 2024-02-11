@@ -63,5 +63,9 @@
         "filesystem": "cpp",
         "fstream": "cpp",
         "regex": "cpp"
+    },
+    "editor.tokenColorCustomizations": {
+        "comments": "",
+        "textMateRules": []
     }
 }

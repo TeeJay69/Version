@@ -26,9 +26,3 @@ Copy everything to a backup directory inside the release directory
     - If its a directory
         - Copy the directory
     - If its a file, copy the file
-
-
-TODO:
-- When .versiontool does not exist yet
-- Editing of the included files
-- command line parameter support
