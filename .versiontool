@@ -2,7 +2,7 @@ Files and directories included in version:
 main.cpp
 ----------
 Compile command:
-g++ main.cpp -march=native -O3
+g++ main.cpp -llibboost_program_options-mt -march=native -O3
 ----------
 Alias:
 version

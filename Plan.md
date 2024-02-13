@@ -33,6 +33,7 @@ TODO:
 - Editing of the included files
 - command line parameter support
     - add to add a specified path to list of included files
+- Add alias parser function to my class
 Command line support in new branch
 vtool
 
@@ -46,4 +47,4 @@ Command line arguments:
     - include (specify filepaths to include, overrides values from configfile)
     - alias (in combination with "file", creates batch file to call "file") / in combination with a release, to specify the alias. If not available, use .versiontool file alias, if not provided, no alias is created.
 
-Include development in future version (see: "Z:\Archives\websites\Websites\Stackoverflow\C++_ Boost program_options_ Multiple lists of arguments - Stack Overflow.html")
+Include development will be in future version (see: "Z:\Archives\websites\Websites\Stackoverflow\C++_ Boost program_options_ Multiple lists of arguments - Stack Overflow.html")
