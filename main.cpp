@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <vector>
 #include <stdexcept>
+#include <boost/program_options.hpp>
 
 #ifdef DEBUG
 #define Debug_Mode 1
@@ -27,6 +28,8 @@
 
 #include <Windows.h>
 
+namespace po = boost::program_options;
+
 void enableColors()
 {
     DWORD consoleMode;
@@ -39,37 +42,242 @@ void enableColors()
 
 #endif
 
-class ConfigFileNames{
+
+class configFileParser{
     private:
         std::string fileName;
-        int identifier;
     public:
-        ConfigFileNames(std::string a, int id) : fileName(a), identifier(id) {} //Constructor
+        configFileParser(const std::string& file) : fileName(file) {} // Constructor
+    
+        std::vector<std::string> readIncludePaths(std::string file){
+            if(!std::filesystem::exists(file)){
+                std::string existError = "Error! file \"" + file + "\" passed to class (configFileParser) does not exist";
+                throw std::runtime_error(existError);
+            }
+            
+            std::ifstream configFile(file);
+            std::vector<std::string> includePaths;
+            std::string line;
 
-        std::string getFileName() const{
-            return fileName;
+            std::getline(configFile, line);
+            if(line == "Files and directories included in version:"){
+                int lineParser = 1;
+                while(lineParser){
+                    std::getline(configFile, line);
+                    
+                    if(!(line == "----------")){
+                        includePaths.push_back(line);
+                    }
+                    else{
+                        configFile.close();
+                        lineParser = 0;
+                        break;
+                    }
+                }
+            }
+            
+            return includePaths;
         }
 
-        int getIdentifier() const{
-            return identifier;
-        }
+        std::string readCompileCommand(std::string file){
+            if(!std::filesystem::exists(file)){
+                std::string existError = "Error! file \"" + file + "\" passed to class (configFileParser) does not exist";
+                throw std::runtime_error(existError);
+            }
 
-        void setFileName(std::string newName){
-            fileName = newName;
-        }
-        
-        void setIdentifier(int id){
-            identifier = id;
+            std::string compileCommand;
+            std::string line;
+            std::ifstream configFile(file);
+
+            while(true){
+                std::getline(configFile, line);
+                if(line == "Compile command:"){
+                    std::getline(configFile, line);
+                    if(!line.empty() && line.find("rmdir ") == std::string::npos && line.find("rd ") == std::string::npos && line.find("-o ") == std::string::npos && line.find("del ") == std::string::npos && line.find("rm ") == std::string::npos && line.find("move ") == std::string::npos && line.find("mv ") == std::string::npos){
+                        compileCommand = line;
+
+                        configFile.close();
+                        break;
+                    }
+                    else{
+                        throw std::runtime_error("Error: Compile Command is empty or contains forbidden words!");
+                    }
+                }
+            }
+
+            return compileCommand;            
         }
 };
 
-int main(){ 
+
+int main(int argc, char* argv[]){
+    
+    // if(Debug_Mode){std::cout << compileCmdConfigfile(".versiontool") << std::endl;getchar(".versiontool");}
 
     enableColors();
-    if(std::filesystem::exists(".versiontool")){
+    po::options_description desc("All options");
+    desc.add_options()
+        ("help", "Produce help message")
+        ("config", po::value<std::string>(), "Configfile Path")
+        ("compile", po::value<std::string>(), "Compile project (may be used with \"cmd\")")
+        ("debug", po::value<std::string>(), "Compile as debug version (can only be used with \"compile\"")
+        ("cmd", po::value<std::string>(), "Compile command (overrides value from .versiontool)")
+        ("release", po::value<std::string>(), "Creates a version release (may be used with \"include\", \"alias\", \"cmd\", \"config\")")
+        ("file", po::value<std::string>(), "executable for alias")
+        ("alias", po::value<std::string>(), "Creates a batch file to call \"file\" (overrides value from .versiontool)");
+        //("include", po::value<std::vector<std::string>>()->multitoken(), "\",\" separated list of paths to include in release. (overrides values from .versiontool)")
+
+    // po::options_description configFileOptions("Config file options");
+    // configFileOptions.add_options()
+    //     ("config-file", po::value<std::string>(), "Config file");
+
+    po::options_description allOptions("All options"); // Initialize allOptions
+    allOptions.add(desc); // Add desc to allOptions
+
+    po::variables_map vm;
+
+    po::store(po::parse_command_line(argc, argv, allOptions), vm);
+    po::notify(vm);
+
+    if(vm.count("help")){
+        std::cout << desc << std::endl;
+    }
+    
+    int argConfigState, argCompileState, argCmdState, argFileState, argReleaseState, argAliasState; // to skip rest of program when command line parameters are provided
+    
+    std::string configPath = ".versiontool";
+    
+    if(vm.count("config")){
+        configPath = vm["config"].as<std::string>();
+        argConfigState = 1;
+    }
+
+    // "compile" args parameter
+    if(argv[1] == "compile" || vm.count("compile")){
+        
+        std::string compileCommand = compileCmdConfigfile(configPath);
+        std::string debugArgs;
+
+        // // File argument
+        // if(vm.count("file")){
+        //     sourceFile = vm["file"].as<std::string>();
+        // }
+        
+        // Compile command argument
+        int cmdArgState = 0;
+        if(vm.count("cmd")){
+            std::string cmdArg = vm["cmd"].as<std::string>();
+            if(cmdArg.find("rmdir ") == std::string::npos && cmdArg.find("rd ") == std::string::npos && cmdArg.find("del ") == std::string::npos && cmdArg.find("rm ") == std::string::npos && cmdArg.find("move ") == std::string::npos && cmdArg.find("mv ") == std::string::npos){
+                compileCommand = cmdArg; 
+            }
+            else{
+                throw std::runtime_error("Error: Compile Command contains forbidden words!");
+            }
+            cmdArgState = 1;
+        }
+
+        const std::filesystem::path cmdCurrentPath = std::filesystem::current_path();
+        const std::filesystem::path cmdCurrentDir = cmdCurrentPath.filename();
+
+        // debug version
+        if(vm.count("debug")){
+            debugArgs = " -DDebug";
+            std::string cmdBuildDebugVersion;
+            
+            // args compile command
+            if(cmdArgState){
+                cmdBuildDebugVersion = "cmd /c" + vm["cmd"].as<std::string>() + debugArgs;
+                
+                if(std::system((cmdBuildDebugVersion).c_str()) == 0){
+                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+                else{
+                    throw std::runtime_error("Error: Program failed to compile");
+                }
+            }
+            // configfile compile command
+            else{
+                cmdBuildDebugVersion = "cmd /c" + compileCommand + " -o" + cmdCurrentDir.generic_string() + "_Debug.exe" + debugArgs;
+                
+                if(std::system((cmdBuildDebugVersion).c_str()) == 0){
+                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+                else{
+                    throw std::runtime_error("Error: Program failed to compile");
+                }
+            }
+        }
+        // Non debug version
+        else{
+            std::string cmdBuildReleaseVersion;
+
+            // args compile command
+            if(cmdArgState){
+                cmdBuildReleaseVersion = "cmd /c" + vm["cmd"].as<std::string>();
+                
+                if(std::system((cmdBuildReleaseVersion).c_str()) == 0){
+                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+                else{
+                    throw std::runtime_error("Error: Program failed to compile");
+                }
+            }
+            // configfile compile command
+            else{
+                cmdBuildReleaseVersion = "cmd /c" + compileCommand + " -o" + cmdCurrentDir.generic_string() + ".exe";
+                
+                if(std::system((cmdBuildReleaseVersion).c_str()) == 0){
+                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+                else{
+                    throw std::runtime_error("Error: Program failed to compile");
+                }
+            }
+        }
+
+        argCompileState = 1;
+    }
+
+    // "release" command line parameter
+    if(argv[1] == "release" || vm.count("release")){
+        std::string versionName;
+
+        if(argv[1] == "release"){
+            versionName = argv[2];    
+        }
+        else if(vm.count("release")){
+            versionName = vm["release"].as<std::string>();
+        }
+        
+        int compileParamState = 0;
+        std::string compileParam;
+        std::string aliasParam;
+
+        // get compile command value if provided as parameter
+        if(vm.count("cmd")){
+            compileParam = vm["cmd"].as<std::string>();
+            compileParamState = 1;           
+        }
+        else{
+            compileParam = compileCmdConfigfile(configPath);
+        }
+        
+        // get alias value if provided
+        if(vm.count("alias")){
+            aliasParam = vm["alias"].as<std::string>();
+        }
+
+        argReleaseState = 1;
+    }
+    
+    if(std::filesystem::exists(configPath)){
         if(Debug_Mode){std::cout << "ConfigFile is present" << std::endl;}
 
-        std::ifstream versiontoolFile(".versiontool");
+        std::ifstream versiontoolFile(configPath);
 
         std::string line;
         std::vector<std::string> fileVector;
@@ -115,6 +323,8 @@ int main(){
                             if(line == "Alias:"){
                                 std::getline(versiontoolFile, line);
                                 aliasConfig = line;
+
+                                versiontoolFile.close();
                                 configParser = 0;
                                 break;
                             }
