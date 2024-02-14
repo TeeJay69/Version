@@ -1,4 +1,7 @@
 v1.1.0
+- Added command line parameter support
+- A ton of new features
+- see commit message
 v1.0.0
 - First official release.
 - Provides multiple useful features for smart creation of version releases.
