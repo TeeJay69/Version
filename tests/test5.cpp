@@ -104,4 +104,12 @@ int main(int argc, char* argv[]){
     if (vm.count("include")) {
     std::cout << "include: " << vm["include"].as<std::string>() << std::endl;
     }
+    
+    std::string compileCommand = "g++ main.cpp -o main.exe all";
+    if(compileCommand.empty() || !(compileCommand.find("rmdir ") == std::string::npos) || !(compileCommand.find("rd ") == std::string::npos) || !(compileCommand.find("del ") == std::string::npos) || !(compileCommand.find("rm ") == std::string::npos) || !(compileCommand.find("move ") == std::string::npos) || !(compileCommand.find("mv ") == std::string::npos)){
+        std::cout << "If statement true" << std::endl;
+    }
+    else{
+        std::cout << "If statement false" << std::endl;
+    }
 }

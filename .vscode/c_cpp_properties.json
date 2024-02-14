@@ -16,7 +16,10 @@
             "cStandard": "c23",
             "cppStandard": "c++23",
             "intelliSenseMode": "windows-gcc-x64",
-            "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe"
+            "compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "compilerArgs": [
+                "-llibboost_program_options-mt"
+            ]
         }
     ],
     "version": 4

@@ -48,3 +48,5 @@ Command line arguments:
     - alias (in combination with "file", creates batch file to call "file") / in combination with a release, to specify the alias. If not available, use .versiontool file alias, if not provided, no alias is created.
 
 Include development will be in future version (see: "Z:\Archives\websites\Websites\Stackoverflow\C++_ Boost program_options_ Multiple lists of arguments - Stack Overflow.html")
+
+- call program options with single letter
