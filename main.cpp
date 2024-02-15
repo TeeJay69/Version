@@ -172,13 +172,13 @@ int main(int argc, char* argv[]){
     desc.add_options()
         ("help", "Produce help message")
         ("config", po::value<std::string>(), "Configfile Path")
-        ("compile", po::value<std::string>(), "Compile project (may be used with \"cmd\")")
-        ("debug", po::value<std::string>(), "Create debug version (may be used with \"compile\", \"release\")")
-        ("cmd", po::value<std::string>(), "Compile command [cannot include output name!] (overrides value from .versiontool)")
-        ("include", po::value<std::string>(), "Files to include in release ([,] comma separated string) (overrides value from .versiontool)")
+        ("compile", po::value<std::string>(), "Compile project")
+        ("debug", po::value<std::string>(), "Create debug version")
+        ("cmd", po::value<std::string>(), "Compile command [cannot include output name!]")
+        ("include", po::value<std::string>(), "Files to include in release ([,] comma separated string)")
         ("release", po::value<std::string>(), "Creates a version release (may be used with \"include\", \"alias\", \"cmd\", \"config\", \"debug\")")
         ("callee", po::value<std::string>(), "create alias for an executable the callee")
-        ("alias", po::value<std::string>(), "Creates a batch file to call \"callee\" (overrides value from .versiontool)");
+        ("alias", po::value<std::string>(), "Creates a batch file to call \"callee\" (overrides configfile)");
 
 
     // po::options_description configFileOptions("Config file options");
@@ -241,6 +241,8 @@ int main(int argc, char* argv[]){
         const std::filesystem::path cmdCurrentPath = std::filesystem::current_path();
         const std::filesystem::path cmdCurrentDir = cmdCurrentPath.filename();
 
+        std::cout << ANSI_COLOR_YELLOW << "Compiling program..." << ANSI_COLOR_RESET << std::endl; // Notify user of progress
+
         // debug version
         if(vm.count("debug")){
             debugArgs = " -DDebug";
@@ -251,7 +253,7 @@ int main(int argc, char* argv[]){
                 cmdBuildDebugVersion = "cmd /c " + vm["cmd"].as<std::string>() + debugArgs;
                 
                 if(std::system((cmdBuildDebugVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -264,7 +266,7 @@ int main(int argc, char* argv[]){
                 cmdBuildDebugVersion = "cmd /c" + compileCommand + " -o" + cmdCurrentDir.generic_string() + "_Debug.exe" + debugArgs;
                 
                 if(std::system((cmdBuildDebugVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -281,7 +283,7 @@ int main(int argc, char* argv[]){
                 cmdBuildReleaseVersion = "cmd /c " + vm["cmd"].as<std::string>();
                 
                 if(std::system((cmdBuildReleaseVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -293,7 +295,7 @@ int main(int argc, char* argv[]){
                 cmdBuildReleaseVersion = "cmd /c" + compileCommand + " -o" + cmdCurrentDir.generic_string() + ".exe";
                 
                 if(std::system((cmdBuildReleaseVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -390,10 +392,12 @@ int main(int argc, char* argv[]){
         const std::filesystem::path currentPath = std::filesystem::current_path();
         const std::filesystem::path currentDirName = currentPath.filename();
 
+        std::cout << ANSI_COLOR_YELLOW << "Compiling program..." << ANSI_COLOR_RESET << std::endl; // Notify user of progress
+
         if(!debugParamState){
             const std::string buildCommand = "cmd /c " + compileParam + " -o " + currentDirName.generic_string() + "-" + versionName + ".exe";
             if(std::system((buildCommand).c_str()) == 0){
-                std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
             else{
@@ -406,7 +410,7 @@ int main(int argc, char* argv[]){
             const std::string buildDebugCommand = "cmd /c " + compileParam + " -o " + currentDirName.generic_string() + "-" + versionName + "_Debug.exe " + "-DDebug";
             
             if(std::system((buildReleaseCommand).c_str()) == 0 && std::system((buildDebugCommand).c_str()) == 0){
-                std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
             else{
@@ -569,8 +573,8 @@ int main(int argc, char* argv[]){
                 return 1;
             }
         }
-        std::cout << ANSI_COLOR_BLUE << "Version [" << versionName << "] was released" << ANSI_COLOR_RESET << std::endl;
-        std::cout << ANSI_COLOR_MAGENTA << "Vtool finished successfully!" << ANSI_COLOR_RESET << std::endl;
+        std::cout << ANSI_COLOR_GREEN << "Version [" << versionName << "] was released" << ANSI_COLOR_RESET << std::endl;
+        std::cout << ANSI_COLOR_GREEN << "Versiontool finished successfully!" << ANSI_COLOR_RESET << std::endl;
         argReleaseState = 1;
 
         return 0;
@@ -621,7 +625,7 @@ int main(int argc, char* argv[]){
         argDebugState = 1;
     }
 
-    // Callee parameter:
+    // "callee" parameter:
     if(vm.count("callee")){
         std::string calleeName = vm["callee"].as<std::string>();
         if(calleeName.empty()){
@@ -739,13 +743,15 @@ int main(int argc, char* argv[]){
 
             const std::filesystem::path currentPath = std::filesystem::current_path();
             const std::filesystem::path currentDir = currentPath.filename();
+            
+            std::cout << ANSI_COLOR_YELLOW << "Compiling program..." << ANSI_COLOR_RESET << std::endl; // Notify user of progress
 
             // Compile the program
             if(debugVersion == 0){
                 const std::string buildReleaseVersion = "cmd /c " + compileCommand + " -o " + currentDir.generic_string() + "-" + versionName + ".exe"; // " -O3" + " -march=native"
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -757,7 +763,7 @@ int main(int argc, char* argv[]){
                 const std::string buildDebugVersion = "cmd /c " + compileCommand + " -o " + currentDir.generic_string() + "-" + versionName + "_Debug.exe" + " -DDebug"; // " -O3" + " -march=native"
                 
                 if(std::system((buildReleaseVersion).c_str()) == 0 && std::system((buildDebugVersion).c_str()) == 0){
-                    std::cout << ANSI_COLOR_GREEN << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
+                    std::cout << ANSI_COLOR_YELLOW << "Program Compiled Successfully!" << ANSI_COLOR_RESET << std::endl;
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 }
                 else{
@@ -911,8 +917,8 @@ int main(int argc, char* argv[]){
                     throw std::runtime_error(itemNotExistError);
                 }
             }
-            std::cout << ANSI_COLOR_BLUE << "Version [" << versionName << "] was released" << ANSI_COLOR_RESET << std::endl;
-            std::cout << ANSI_COLOR_MAGENTA << "Vtool finished successfully!" << ANSI_COLOR_RESET << std::endl;
+            std::cout << ANSI_COLOR_GREEN << "Version [" << versionName << "] released" << ANSI_COLOR_RESET << std::endl;
+            std::cout << ANSI_COLOR_GREEN << "Versiontool finished successfully!" << ANSI_COLOR_RESET << std::endl;
         }
         else{
             std::cout << "User canceled program" << std::endl;
