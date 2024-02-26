@@ -54,3 +54,11 @@ Command line arguments:
 
 # Installer
     - Create one that installs the program to a specified path
+
+
+# Critical ToDo's:
+[ ] Display message when nothing was done. When wrong arguments, incomplete etc..
+
+
+# Feature requests:
+[ ] argument to show all existing releases

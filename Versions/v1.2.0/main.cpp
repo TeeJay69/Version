@@ -182,8 +182,7 @@ int main(int argc, char* argv[]){
         ("include", po::value<std::string>(), "Files to include in release [path1,path2])")
         ("release", po::value<std::string>(), "Creates a version release (may be used with \"include\", \"alias\", \"cmd\", \"config\", \"debug\")")
         ("callee", po::value<std::string>(), "alias for a callee [aliasname1,aliasname2]")
-        ("alias", po::value<std::string>(), "Creates a batch file to call \"callee\" (overrides configfile)")
-        ("version", po::value<std::string>(), "Display version");
+        ("alias", po::value<std::string>(), "Creates a batch file to call \"callee\" (overrides configfile)");
 
 
     // po::options_description configFileOptions("Config file options");
@@ -200,10 +199,6 @@ int main(int argc, char* argv[]){
 
     if(vm.count("help")){
         std::cout << desc << std::endl;
-        return 0;
-    }
-    if(vm.count("version")){
-        std::cout << "v1.2.0" << std::endl;
         return 0;
     }
     
