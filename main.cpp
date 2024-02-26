@@ -25,6 +25,7 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+
 #ifdef _WIN32 
 
 #include <Windows.h>
@@ -130,10 +131,10 @@ class configFileParser{
             return compileCommand;            
         }
 
-        std::string readAlias(){
+        std::vector<std::string> readAlias(){
             configCheck();
 
-            std::string aliasString;
+            std::vector<std::string> aliasList;
             std::ifstream configFile(fileName);
             std::string line;
 
@@ -142,17 +143,20 @@ class configFileParser{
                 if(line == "Alias:"){
                     std::getline(configFile, line);
                     if(!line.empty()){
-                        
-                        aliasString = line;
-                        configFile.close();
-                        break;
+                        if(line.find("----------") == std::string::npos){
+                            aliasList.push_back(line);
+                        }
+                        else{
+                            configFile.close();
+                            break;
+                        }
                     }
                     else{
                         throw std::runtime_error("Error: Alias config is empty!");
                     }
                 }
             }
-            return aliasString;
+            return aliasList;
         }
 };
 
@@ -175,9 +179,9 @@ int main(int argc, char* argv[]){
         ("compile", po::value<std::string>(), "Compile project")
         ("debug", po::value<std::string>(), "Create debug version")
         ("cmd", po::value<std::string>(), "Compile command [cannot include output name!]")
-        ("include", po::value<std::string>(), "Files to include in release ([,] comma separated string)")
+        ("include", po::value<std::string>(), "Files to include in release [path1,path2])")
         ("release", po::value<std::string>(), "Creates a version release (may be used with \"include\", \"alias\", \"cmd\", \"config\", \"debug\")")
-        ("callee", po::value<std::string>(), "create alias for an executable the callee")
+        ("callee", po::value<std::string>(), "alias for a callee [aliasname1,aliasname2]")
         ("alias", po::value<std::string>(), "Creates a batch file to call \"callee\" (overrides configfile)");
 
 
@@ -328,7 +332,6 @@ int main(int argc, char* argv[]){
         int compileParamState = 0, aliasParamState = 0, debugParamState = 0, includeParamState = 0;
 
         std::string compileParam;
-        std::string aliasParam;
 
         // get compile command
         if(vm.count("cmd")){
@@ -357,18 +360,28 @@ int main(int argc, char* argv[]){
             includeParamState = 1;
         }
 
-        // get alias value if provided
+        // get alias values if provided
+        std::string aliasParams;
+        std::vector<std::string> aliasList;
         std::string aliasCalleeName;
         if(vm.count("alias")){
-            aliasParam = vm["alias"].as<std::string>();
-            if(!aliasParam.empty()){
+            aliasParams = vm["alias"].as<std::string>();
+            if(!aliasParams.empty()){
                 aliasParamState = 1;
+            }
+            
+            // Parse alias string
+            std::stringstream aliasStream(aliasParams);
+            std::string token;
+            while(std::getline(aliasStream, token, ',')){
+                aliasList.push_back(token);
             }
         }
         else{
+            // Get alias from configfile
             configFileParser parser(configPath);
-            aliasParam = parser.readAlias();
-            if(!aliasParam.empty()){
+            aliasList = parser.readAlias();
+            if(!aliasList.empty()){
                 aliasParamState = 1;
             }
         }
@@ -466,22 +479,24 @@ int main(int argc, char* argv[]){
 
         // Create alias files
         if(aliasParamState){
-            std::string aliasPath = versionDir + "\\" + aliasParam + ".bat";
-            std::string aliasPathBackup = versionDirBackup + "\\" + aliasParam + ".bat";
+            for(const auto& item : aliasList){
+                const std::string aliasPath = versionDir + "\\" + item + ".bat";
+                const std::string aliasPathBackup = versionDirBackup + "\\" + item + ".bat";
 
-            std::ofstream aliasCallerFile(aliasPath);
-            std::ofstream aliasCallerFileBackup(aliasPathBackup);
+                std::ofstream aliasCallerFile(aliasPath);
+                std::ofstream aliasCallerFileBackup(aliasPathBackup);
 
-            if(aliasCallerFile.is_open() && aliasCallerFileBackup.is_open()){
-                aliasCallerFile << aliasCalleeName << " %*";
-                aliasCallerFileBackup << aliasCalleeName << " %*";
+                if(aliasCallerFile.is_open() && aliasCallerFileBackup.is_open()){
+                    aliasCallerFile << aliasCalleeName << " %*";
+                    aliasCallerFileBackup << aliasCalleeName << " %*";
 
-                aliasCallerFile.close();
-                aliasCallerFileBackup.close();
-            }
-            else{
-                std::cerr << "Error creating alias file";
-                std::exit(EXIT_FAILURE);
+                    aliasCallerFile.close();
+                    aliasCallerFileBackup.close();
+                }
+                else{
+                    std::cerr << "Error creating alias file";
+                    std::exit(EXIT_FAILURE);
+                }
             }
         }
         
@@ -620,6 +635,24 @@ int main(int argc, char* argv[]){
         argAliasState = 1;
     }
     
+    // get alias values if provided
+    std::string aliasParams;
+    std::vector<std::string> aliasList;
+    std::string aliasCalleeName;
+    if(vm.count("alias")){
+        aliasParams = vm["alias"].as<std::string>();
+        if(!aliasParams.empty()){
+            argAliasState = 1;
+        }
+        
+        // Parse alias string
+        std::stringstream aliasStream(aliasParams);
+        std::string token;
+        while(std::getline(aliasStream, token, ',')){
+            aliasList.push_back(token);
+        }
+    }
+
     // "debug" parameter
     if(vm.count("debug")){
         argDebugState = 1;
@@ -630,25 +663,29 @@ int main(int argc, char* argv[]){
         std::string calleeName = vm["callee"].as<std::string>();
         if(calleeName.empty()){
             std::cerr << "Error: no name was provided for (callee)" << std::endl;
-            return 1;
+            std::exit(EXIT_FAILURE);
         }
         if(argAliasState != 1){
             std::cerr << "Error: no (alias) was provided to call (callee)" << std::endl;
-            return 1;
+            std::exit(EXIT_FAILURE);
         }
 
-        std::ofstream aliasFile(aliasName + ".bat");
-        if(aliasFile.is_open()){
-            aliasFile << calleeName << " %*";
-            aliasFile.close();
-        }
-        else{
-            std::cerr << "Error creating alias file for callee" << std::endl;
-            return 1;
+        // Create alias files
+        for(const auto& aliasName : aliasList){
+            std::ofstream aliasFile(aliasName + ".bat");
+            if(aliasFile.is_open()){
+                aliasFile << calleeName << " %*";
+                aliasFile.close();
+            }
+            else{
+                std::cerr << "Error creating alias file for callee" << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
         }
 
-        return 0;
+        std::exit(EXIT_SUCCESS);
     }
+
 
     // Only few select command line parameters (config) (alias) (cmd) (include) (debug) // easier to maintain
     if(argCompileState == 0 && argCalleeState == 0 && argReleaseState == 0){
@@ -669,18 +706,23 @@ int main(int argc, char* argv[]){
                 throw std::runtime_error("Error: Compile Command is empty or contains forbidden elements!");
             }
         }
-
+        
         // Get alias from config file
-        int aliasFeature = 0; // Switch
-        if(argAliasState == 0){
-            aliasName = parser.readAlias();
-            if(aliasName.find("----------") == std::string::npos){
-                std::cout << " indicator " << "aliasName: " << aliasName << std::endl;
-                aliasFeature = 1;
-            }
+        int aliasFeature = 0;
+        if(argAliasState == 1){
+            // Alias argument provided
+            aliasFeature = 1;
         }
         else{
-            aliasFeature = 1;
+            // Alias argument not provided
+            aliasList = parser.readAlias();
+
+            if(!aliasList.empty()){
+                aliasFeature = 1;
+            }
+            else{
+                aliasFeature = 0;
+            }
         }
 
         std::cout << ANSI_COLOR_GREEN << "Items included in the Release:" << ANSI_COLOR_RESET << std::endl;
@@ -812,23 +854,26 @@ int main(int argc, char* argv[]){
                 exeNameForAlias = exeNameRelease;
             }
 
-            // Create alias file
+            // Create alias files
             if(aliasFeature == 1){
-                std::string aliasFileVersionPath = versionDir + "\\" + aliasName + ".bat";
-                std::string aliasFileBackupPath = versionDirBackup + "\\" + aliasName + ".bat";
-                std::ofstream aliasFile(aliasFileVersionPath);
-                std::ofstream aliasFileBackup(aliasFileBackupPath);
-                
-                if(aliasFile.is_open() && aliasFileBackup.is_open()){
-                    aliasFile << exeNameForAlias << " %*";
-                    aliasFileBackup << exeNameForAlias << " %*";
-                    
-                    aliasFile.close();
-                    aliasFileBackup.close();
-                }
-                else{
-                    std::cerr << "Error creating alias file";
-                    std::exit(EXIT_FAILURE);
+                for(const auto& aliasName : aliasList){
+                    const std::string aliasPath = versionDir + "\\" + aliasName + ".bat";
+                    const std::string aliasPathBackup = versionDirBackup + "\\" + aliasName + ".bat";
+
+                    std::ofstream aliasCallerFile(aliasPath);
+                    std::ofstream aliasCallerFileBackup(aliasPathBackup);
+
+                    if(aliasCallerFile.is_open() && aliasCallerFileBackup.is_open()){
+                        aliasCallerFile << exeNameForAlias << " %*";
+                        aliasCallerFileBackup << exeNameForAlias << " %*";
+
+                        aliasCallerFile.close();
+                        aliasCallerFileBackup.close();
+                    }
+                    else{
+                        std::cerr << "Error creating alias file";
+                        std::exit(EXIT_FAILURE);
+                    }
                 }
             }
 
