@@ -1,8 +1,11 @@
 Files and directories included in version:
 main.cpp
+changelog.md
 ----------
 Compile command:
 g++ main.cpp -llibboost_program_options-mt -march=native -O3
 ----------
 Alias:
+version
+vtool
 ----------
