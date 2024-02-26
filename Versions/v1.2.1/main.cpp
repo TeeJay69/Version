@@ -25,7 +25,6 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#define VERSION "v1.2.1"
 
 #ifdef _WIN32 
 
@@ -171,7 +170,7 @@ void exitSignalHandler(int signal){
 int main(int argc, char* argv[]){
     if(argv[1] != NULL){
         if(argc >= 2 && std::string(argv[1]) == "--version" || std::string(argv[1]) == "version"){
-            std::cout << VERSION << std::endl;
+            std::cout << "v1.2.0" << std::endl;
             return 0;
         }
     }
