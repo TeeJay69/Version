@@ -161,6 +161,10 @@ void exitSignalHandler(int signal){
     std::exit(signal);
 }
 
+void assignGlobal(const std::string& pLocFull){
+    pLocat = std::filesystem::path(pLocFull).parent_path().string();
+}
+
 /**
  * @brief Recursively copy a directory or a single file
  * @param source Source path
@@ -254,7 +258,6 @@ inline void handleCompileOption(char* argv[], int argc){
     }
 }
 
-
 inline std::string getOutputName(const std::string& com){
     const std::string flag = "-o";
     // Find position of "-o"
@@ -273,6 +276,7 @@ inline std::string getOutputName(const std::string& com){
 
     return {};
 }
+
 
 inline void updateVersion(const std::string& filepath, const std::string& newVersion) {
     std::ifstream fileIn(filepath);
@@ -306,8 +310,110 @@ inline void updateVersion(const std::string& filepath, const std::string& newVer
     }
 }
 
-void assignGlobal(const std::string& pLocFull){
-    pLocat = std::filesystem::path(pLocFull).parent_path().string();
+inline int handleReleaseOption(char* argv[], int argc){
+    std::string vname;
+    if(argv[2] == NULL){
+        std::cout << ANSI_COLOR_GREEN << "Enter version name:";
+        std::getline(std::cin, vname);
+        if(vname.empty()){
+            std::cerr << "Fatal: missing version name." << std::endl;
+            return 1;
+        }
+    }
+    else{
+        vname = std::string(argv[2]);
+    }
+
+    const std::string vDir = "Versions\\" + vname;
+    const std::string vDirBackup = "Versions\\" + vname + "\\backup";
+
+    if(std::filesystem::exists(vDir)){
+        std::cerr << "Fatal: Version exists already." << std::endl;
+        return 1;
+    }
+    else{
+        std::filesystem::create_directories(vDir);
+        std::filesystem::create_directories(vDirBackup);
+    }
+
+    configFileParser P(".versiontool");
+    P.configCheck();
+    const std::string com = P.readCompileCommand();
+    if(checkCompileCom(com) != 1){
+        return 1;
+    }
+    
+    if(compile(com) != 1){
+        return 1;
+    }
+
+    const std::string pname = getOutputName(com);
+    if(pname.empty()){
+        std::cerr << "Fatal: output name is missing." << std::endl;
+        return 1;
+    }
+    recurse_copy(pname, vDir);
+    recurse_copy(pname, vDirBackup);
+
+    for(const auto& elem : P.readIncludePaths()){
+        recurse_copy(elem, vDir);
+        recurse_copy(elem, vDirBackup);
+    }
+    for(const auto& elem : P.readAlias()){
+        const std::string f = elem + ".bat";
+        std::ofstream of(f);
+        of << pname << " %*";
+        of.close();
+        std::filesystem::copy(f, vDir + "\\" + f);
+        std::filesystem::copy(f, vDirBackup + "\\" + f);
+    }
+
+    const std::string iss = "ISS.iss";
+    if(std::filesystem::exists(iss)){
+        updateVersion(iss, vname);
+        const std::string isscom = "cmd /c iscc " + iss;
+        if(std::system(isscom.c_str()) != 0){
+            std::cerr << "Failed to compile pascal file." << std::endl;
+            std::cout << "Try adding 'C:\\Program Files (x86)\\Inno Setup 6' to your PATH environment variable." << std::endl;
+            return 1;
+        }
+
+        std::string pname_noext = pname;
+        std::string ext = ".exe";
+        pname_noext.erase(pname_noext.find(ext), ext.length()); 
+        const std::string setupFile = pname_noext + "-Setup.exe";
+        std::filesystem::copy(setupFile, vDir + "\\" + setupFile);
+        std::filesystem::copy(setupFile, vDirBackup + "\\" + setupFile);
+    }
+    
+    std::cout << ANSI_COLOR_GREEN << vname << " released." << ANSI_COLOR_RESET << std::endl;
+
+    return 0;
+}
+
+inline void handleConfigOption(char* argv[], int argc){
+    if(argv[2] == NULL){
+        std::ifstream in(".versiontool");
+        if(!in){
+            std::cerr << "Fatal: Failed to open file." << std::endl;
+            return;
+        }
+        std::stringstream buff;
+        buff << in.rdbuf();
+        std::cout << buff.str() << std::endl;    
+    }
+    else if(std::string(argv[2]) == "--raw" || std::string(argv[2]) == "-r"){
+        if(std::system("cmd /c code .versiontool") != 0){
+            if(std::system("cmd /c vim .versiontool") != 0){
+                if(std::system("cmd /c notepad .versiontool") != 0){
+                    std::cerr << "Fatal: Failed to open config in editor." << std::endl;
+                }
+            }
+        }
+    }
+    else{
+        std::cerr << "Fatal: Invalid option." << std::endl;
+    }
 }
 
 int main(int argc, char* argv[]){
@@ -330,92 +436,32 @@ int main(int argc, char* argv[]){
         std::cout << "Software release tool." << std::endl;  
         std::cout << "See 'version --help' for usage." << std::endl;
     }
-    else if(argc >= 2 && std::string(argv[1]) == "--version" || std::string(argv[1]) == "version" || std::string(argv[1]) == "-v"){
+    else if(std::string(argv[1]) == "--version" || std::string(argv[1]) == "version" || std::string(argv[1]) == "-v"){
         std::cout << VERSION << std::endl;
+    }
+    else if(std::string(argv[1]) == "--help" || std::string(argv[1]) == "help" || std::string(argv[1]) == "-h"){
+        std::cout << "Version (JW-CoreUtils) " << VERSION << std::endl;
+        std::cout << "Copyright (C) 2024 - Jason Weber. All rights reserved." << std::endl;
+        std::cout << "usage: version [OPTIONS]... [OPERAND]" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "compile, -c [COMMAND]                     Compile project using either provided command or file (.versiontool).\n";
+        std::cout << "release, -r [VERSION]                     Create a release (+ Setup.exe if ISS.iss file present (changes version name)).\n";
+        std::cout << "config                                    Display config.\n";
+        std::cout << "    --raw, -r                             Open config file in editor.\n";
+        std::cout << "--help, -h                                Show this help message.\n";                                 
+        std::cout << "--version, -v                             Display version.\n";
     }
     else if(std::string(argv[1]) == "compile" || std::string(argv[1]) == "-c"){
         handleCompileOption(argv, argc);
     }
     else if(std::string(argv[1]) == "release" || std::string(argv[1]) == "-r"){
-        std::string vname;
-        if(argv[2] == NULL){
-            std::cout << ANSI_COLOR_GREEN << "Enter version name:";
-            std::getline(std::cin, vname);
-            if(vname.empty()){
-                std::cerr << "Fatal: missing version name." << std::endl;
-                return 1;
-            }
-        }
-        else{
-            vname = std::string(argv[2]);
-        }
-
-        const std::string vDir = "Versions\\" + vname;
-        const std::string vDirBackup = "Versions\\" + vname + "\\backup";
-
-        if(std::filesystem::exists(vDir)){
-            std::cerr << "Fatal: Version exists already." << std::endl;
-            return 1;
-        }
-        else{
-            std::filesystem::create_directories(vDir);
-            std::filesystem::create_directories(vDirBackup);
-        }
-
-        configFileParser P(".versiontool");
-        P.configCheck();
-        const std::string com = P.readCompileCommand();
-        if(checkCompileCom(com) != 1){
-            return 1;
-        }
-        
-        if(compile(com) != 1){
-            return 1;
-        }
-
-        const std::string pname = getOutputName(com);
-        if(pname.empty()){
-            std::cerr << "Fatal: output name is missing." << std::endl;
-            return 1;
-        }
-        recurse_copy(pname, vDir);
-        recurse_copy(pname, vDirBackup);
-
-        for(const auto& elem : P.readIncludePaths()){
-            recurse_copy(elem, vDir);
-            recurse_copy(elem, vDirBackup);
-        }
-        for(const auto& elem : P.readAlias()){
-            const std::string f = elem + ".bat";
-            std::ofstream of(f);
-            of << pname << " %*";
-            of.close();
-            std::filesystem::copy(f, vDir + "\\" + f);
-            std::filesystem::copy(f, vDirBackup + "\\" + f);
-        }
-
-        const std::string iss = "ISS.iss";
-        if(std::filesystem::exists(iss)){
-            updateVersion(iss, vname);
-            const std::string isscom = "cmd /c iscc " + iss;
-            if(std::system(isscom.c_str()) != 0){
-                std::cerr << "Failed to compile pascal file." << std::endl;
-                std::cout << "Try adding 'C:\\Program Files (x86)\\Inno Setup 6' to your PATH environment variable." << std::endl;
-                return 1;
-            }
-
-            std::string pname_noext = pname;
-            std::string ext = ".exe";
-            pname_noext.erase(pname_noext.find(ext), ext.length()); 
-            const std::string setupFile = pname_noext + "-Setup.exe";
-            std::filesystem::copy(setupFile, vDir + "\\" + setupFile);
-            std::filesystem::copy(setupFile, vDirBackup + "\\" + setupFile);
-        }
-        
-        std::cout << ANSI_COLOR_GREEN << vname << " released." << ANSI_COLOR_RESET << std::endl;
+        return handleReleaseOption(argv, argc);
+    }
+    else if(std::string(argv[1]) == "config"){
+        handleConfigOption(argv, argc);
     }
     else{
-        std::cerr << "Fatal: '" << argv[1] << "' is not a vtool command." << std::endl;
+        std::cerr << "Fatal: '" << argv[1] << "' is not a version command." << std::endl;
         return 1;
     }
     

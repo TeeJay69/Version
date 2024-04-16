@@ -6,6 +6,4 @@ Compile command:
 g++ main.cpp -o version-v2.exe -O3
 ----------
 Alias:
-version
-vtool
 ----------
