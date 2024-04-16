@@ -242,6 +242,7 @@ inline void handleCompileOption(char* argv[], int argc){
         if(checkCompileCom(com) != 1){
             return;
         }
+        std::cout << com << std::endl;
         std::cout << ANSI_COLOR_YELLOW << "Compiling source code..." << ANSI_COLOR_RESET << std::endl;
         if(std::system(com.c_str()) != 0){
             std::cout << "Compilation failed with errors." << std::endl;
@@ -373,6 +374,10 @@ int main(int argc, char* argv[]){
         }
 
         const std::string pname = getOutputName(com);
+        if(pname.empty()){
+            std::cerr << "Fatal: output name is missing." << std::endl;
+            return 1;
+        }
         recurse_copy(pname, vDir);
         recurse_copy(pname, vDirBackup);
 
