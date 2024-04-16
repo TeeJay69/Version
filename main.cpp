@@ -113,7 +113,7 @@ class configFileParser{
                 std::getline(configFile, line);
                 if(line == "Compile command:"){
                     std::getline(configFile, line);
-                    if(!line.empty() && line.find("----------") == std::string::npos && line.find("rmdir ") == std::string::npos && line.find("rd ") == std::string::npos && line.find("-o ") == std::string::npos && line.find("del ") == std::string::npos && line.find("rm ") == std::string::npos && line.find("move ") == std::string::npos && line.find("mv ") == std::string::npos){
+                    if(!line.empty() && line.find("----------") == std::string::npos && line.find("rmdir ") == std::string::npos && line.find("rd ") && line.find("del ") == std::string::npos && line.find("rm ") == std::string::npos && line.find("move ") == std::string::npos && line.find("mv ") == std::string::npos){
                         compileCommand = line;
                         configFile.close();
                         break;
@@ -348,17 +348,6 @@ int main(int argc, char* argv[]){
         else{
             vname = std::string(argv[2]);
         }
-        
-        configFileParser P(".versiontool");
-        P.configCheck();
-        const std::string com = P.readCompileCommand();
-        if(checkCompileCom(com) != 1){
-            return 1;
-        }
-        
-        if(compile(com) != 1){
-            return 1;
-        }
 
         const std::string vDir = "Versions\\" + vname;
         const std::string vDirBackup = "Versions\\" + vname + "\\backup";
@@ -370,6 +359,17 @@ int main(int argc, char* argv[]){
         else{
             std::filesystem::create_directories(vDir);
             std::filesystem::create_directories(vDirBackup);
+        }
+
+        configFileParser P(".versiontool");
+        P.configCheck();
+        const std::string com = P.readCompileCommand();
+        if(checkCompileCom(com) != 1){
+            return 1;
+        }
+        
+        if(compile(com) != 1){
+            return 1;
         }
 
         const std::string pname = getOutputName(com);
@@ -385,8 +385,8 @@ int main(int argc, char* argv[]){
             std::ofstream of(f);
             of << pname << " %*";
             of.close();
-            std::filesystem::copy(f, vDir);
-            std::filesystem::copy(f, vDirBackup);
+            std::filesystem::copy(f, vDir + "\\" + f);
+            std::filesystem::copy(f, vDirBackup + "\\" + f);
         }
 
         const std::string iss = "ISS.iss";
@@ -403,8 +403,8 @@ int main(int argc, char* argv[]){
             std::string ext = ".exe";
             pname_noext.erase(pname_noext.find(ext), ext.length()); 
             const std::string setupFile = pname_noext + "-Setup.exe";
-            std::filesystem::copy(setupFile, vDir);
-            std::filesystem::copy(setupFile, vDirBackup);
+            std::filesystem::copy(setupFile, vDir + "\\" + setupFile);
+            std::filesystem::copy(setupFile, vDirBackup + "\\" + setupFile);
         }
         
         std::cout << ANSI_COLOR_GREEN << vname << " released." << ANSI_COLOR_RESET << std::endl;
