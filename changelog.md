@@ -1,3 +1,10 @@
+# v2.1.0
+    - config command to display config. config '--raw', '-r' to open config file in editor
+    - Formatted help message
+# v2.0.0
+    - Refactor
+    - Supports ISS.iss file, updates the version within the file automatically.
+    - Compiles ISS.iss file
 # v1.2.1
     - Fixed: Combined planned release and critical hotfix.
     - HotFix: Resolved bug resulting in endless loop.

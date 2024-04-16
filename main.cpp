@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v1.2.1"
+#define VERSION "v2.1.0"
 
 #ifdef _WIN32 
 
@@ -437,7 +437,8 @@ int main(int argc, char* argv[]){
         std::cout << "See 'version --help' for usage." << std::endl;
     }
     else if(std::string(argv[1]) == "--version" || std::string(argv[1]) == "version" || std::string(argv[1]) == "-v"){
-        std::cout << VERSION << std::endl;
+        std::cout << "Version (JW-CoreUtils) " << ANSI_COLOR_36 <<  VERSION  ANSI_COLOR_RESET << std::endl;
+        std::cout << "Copyright (C) 2024 - Jason Weber. All rights reserved." << std::endl;
     }
     else if(std::string(argv[1]) == "--help" || std::string(argv[1]) == "help" || std::string(argv[1]) == "-h"){
         std::cout << "Version (JW-CoreUtils) " << VERSION << std::endl;
