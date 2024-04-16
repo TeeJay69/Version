@@ -1,1 +1,0 @@
-versiontool-v1.0.0_Release.exe %*
