@@ -1,11 +1,9 @@
 Files and directories included in version:
-main.cpp
-changelog.md
+
 ----------
 Compile command:
-g++ main.cpp -o version.exe -O3
+
 ----------
 Alias:
-version
-vtool
+
 ----------
