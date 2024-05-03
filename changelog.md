@@ -1,3 +1,5 @@
+# v2.1.1 Hotfix
+    - Patches filesystem exception that occured during all releases
 # v2.1.0
     - config command to display config. config '--raw', '-r' to open config file in editor
     - Formatted help message

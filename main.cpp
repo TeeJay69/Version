@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.1.0"
+#define VERSION "v2.1.1"
 
 #ifdef _WIN32 
 
@@ -382,8 +382,15 @@ inline int handleReleaseOption(char* argv[], int argc){
         std::string ext = ".exe";
         pname_noext.erase(pname_noext.find(ext), ext.length()); 
         const std::string setupFile = pname_noext + "-Setup.exe";
-        std::filesystem::copy(setupFile, vDir + "\\" + setupFile);
-        std::filesystem::copy(setupFile, vDirBackup + "\\" + setupFile);
+        const std::string setupFileDest = vDir + "\\" + setupFile;
+        const std::string setupFileDestBackup = vDirBackup + "\\" + setupFile;
+        if(!std::filesystem::exists(setupFileDest)){
+            std::filesystem::copy(setupFile, setupFileDest);
+        }
+        if(!std::filesystem::exists(setupFileDestBackup)){
+            std::filesystem::copy(setupFile, setupFileDestBackup);
+
+        }
     }
     
     std::cout << ANSI_COLOR_GREEN << vname << " released." << ANSI_COLOR_RESET << std::endl;
