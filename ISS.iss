@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Version"
-#define MyAppVersion "v2.1.0"
+#define MyAppVersion "v2.1.2"
 #define MyAppPublisher "Jason Weber"
 #define MyAppURL "https://github.com/TeeJay69"
 #define MyAppExeName "Version.exe"

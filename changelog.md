@@ -1,3 +1,7 @@
+# v2.1.2
+### Fix ISS file version update
+- Version was not correctly updated
+
 # v2.1.1 Hotfix
     - Patches filesystem exception that occured during all releases
 # v2.1.0

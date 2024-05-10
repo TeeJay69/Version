@@ -62,3 +62,38 @@ Command line arguments:
 
 # Feature requests:
 [ ] argument to show all existing releases
+
+# Parking Lot:
+<!--
+inline void updateVersion(const std::string& filepath, const std::string& newVersion) {
+     std::ifstream fileIn(filepath);
+     if (!fileIn.is_open()) {
+         std::cerr << "Failed to open file for reading." << std::endl;
+         return;
+     
+     std::ostringstream content;
+     std::regex versionPattern(R"(#define MyAppVersion \"v?\d+\.\d+\.\d+\")");
+     std::string line;
+     bool replaced = false
+     while (getline(fileIn, line)) {
+         std::string newLine = std::regex_replace(line, versionPattern, "#define MyAppVersion \"" + newVersion + "\"");
+         if (newLine != line) {
+             line = newLine;
+             replaced = true;
+         }
+         content << line << '\n';
+     }
+     fileIn.close()
+     if (replaced) {
+         std::ofstream fileOut(filepath);
+         if (!fileOut.is_open()) {
+             std::cerr << "Failed to open file for writing." << std::endl;
+             return;
+         }
+         fileOut << content.str();
+         fileOut.close();
+         std::cout << "Version updated successfully to " << newVersion << std::endl;
+     } else {
+         std::cout << "No version update needed." << std::endl;
+     }
+} -->

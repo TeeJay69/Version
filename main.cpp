@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.1.1"
+#define VERSION "v2.1.2"
 
 #ifdef _WIN32 
 
@@ -277,7 +277,6 @@ inline std::string getOutputName(const std::string& com){
     return {};
 }
 
-
 inline void updateVersion(const std::string& filepath, const std::string& newVersion) {
     std::ifstream fileIn(filepath);
     std::string content = "";
@@ -289,7 +288,7 @@ inline void updateVersion(const std::string& filepath, const std::string& newVer
     }
 
     // Use regex to find and replace the version string
-    std::regex versionPattern(R"(#define MyAppVersion "\d+\.\d+\.\d+")");
+    std::regex versionPattern(R"(#define MyAppVersion \"v?\d+\.\d+\.\d+\")");
 
     while (getline(fileIn, line)) {
         // Replace the existing version with the new version
@@ -309,6 +308,8 @@ inline void updateVersion(const std::string& filepath, const std::string& newVer
         std::cerr << "Failed to write to file." << std::endl;
     }
 }
+
+
 
 inline int handleReleaseOption(char* argv[], int argc){
     std::string vname;
@@ -387,9 +388,16 @@ inline int handleReleaseOption(char* argv[], int argc){
         if(!std::filesystem::exists(setupFileDest)){
             std::filesystem::copy(setupFile, setupFileDest);
         }
+        else{
+            std::filesystem::remove(setupFileDest);
+            std::filesystem::copy(setupFile, setupFileDest);
+        }
         if(!std::filesystem::exists(setupFileDestBackup)){
             std::filesystem::copy(setupFile, setupFileDestBackup);
-
+        }
+        else{
+            std::filesystem::remove(setupFileDestBackup);
+            std::filesystem::copy(setupFile, setupFileDestBackup);
         }
     }
     
