@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.1.2"
+#define VERSION "v2.2.2"
 
 #ifdef _WIN32 
 
@@ -154,6 +154,15 @@ class configFileParser{
         }
 };
 
+static int argcmp(char** argv, int argc, const char* cmp){
+    for(int i = 0; i < argc; i++){
+        if(strcmp(argv[i], cmp) == 0){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void exitSignalHandler(int signal){
     
     std::cout << "Ctrl+C caught, initiating exit procedure" << ANSI_COLOR_RESET << std::endl << std::flush;
@@ -239,6 +248,26 @@ inline int compile(const std::string& com){
     return 1;
 }
 
+std::string extractOutputName(const std::string& compileCommand) {
+    std::smatch match;
+    // Regex to match `-o` followed by optional spaces and capturing file name/path
+    std::regex pattern(R"(-o\s*([^\s]+))");
+    // Regex for Visual C++ style `/out:` followed by optional spaces and capturing file name/path
+    std::regex patternVC(R"(/out:([^\s]+))");
+
+    // Try to match Unix-like pattern
+    if (std::regex_search(compileCommand, match, pattern) && match.size() > 1) {
+        return match[1];
+    }
+    // Try to match Visual C++ pattern
+    else if (std::regex_search(compileCommand, match, patternVC) && match.size() > 1) {
+        return match[1];
+    }
+
+    // Return a.exe if no match is found
+    return "";
+}
+
 inline void handleCompileOption(char* argv[], int argc){
     if(argv[2] == NULL){
         configFileParser CP(".versiontool");
@@ -255,6 +284,45 @@ inline void handleCompileOption(char* argv[], int argc){
         else{
             std::cout << ANSI_COLOR_GREEN << "Source code compiled successfully." << ANSI_COLOR_RESET << std::endl;
         }
+    }
+    else if(argcmp(argv, argc, "--run") || argcmp(argv, argc, "-r")){
+        std::string com;
+        if(std::string(argv[2]) == "--run" || std::string(argv[2]) == "-r"){
+            if(argv[3] == NULL){
+                configFileParser CP(".versiontool");
+                com = CP.readCompileCommand();
+            }
+            else if(checkCompileCom(std::string(argv[3])) == 1){
+                com = std::string(argv[3]);
+            }
+            else{
+                std::cerr << "Fatal: Provided command is invalid." << std::endl;
+            }
+        }
+        else if(checkCompileCom(std::string(argv[2])) == 1){
+            com = std::string(argv[2]);
+        }
+
+        if(checkCompileCom(com) != 1){
+            return;
+        }
+        std::cout << com << std::endl;
+        std::cout << ANSI_COLOR_YELLOW << "Compiling source code..." << ANSI_COLOR_RESET << std::endl;
+        if(std::system(com.c_str()) != 0){
+            std::cout << "Compilation failed with errors." << std::endl;
+            return;
+        }
+        else{
+            std::cout << ANSI_COLOR_GREEN << "Source code compiled successfully." << ANSI_COLOR_RESET << std::endl;
+        }
+        std::string outName = extractOutputName(com); 
+        if(outName.empty()){
+            outName = "a.exe";
+        }
+        const std::string runCom = "cmd /c \".\\" + outName;
+        int retVal = std::system(runCom.c_str());
+        std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
+        std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
     }
 }
 
@@ -461,6 +529,8 @@ int main(int argc, char* argv[]){
         std::cout << "usage: version [OPTIONS]... [OPERAND]" << std::endl;
         std::cout << "Options:" << std::endl;
         std::cout << "compile, -c [COMMAND]                     Compile project using either provided command or file (.versiontool).\n";
+        std::cout << "    --run, -r                             Executes the program after building.\n";
+        std::cout << "run, -e                                   Executes the program.\n";
         std::cout << "release, -r [VERSION]                     Create a release (+ Setup.exe if ISS.iss file present (changes version name)).\n";
         std::cout << "config                                    Display config.\n";
         std::cout << "    --raw, -r                             Open config file in editor.\n";
@@ -472,6 +542,9 @@ int main(int argc, char* argv[]){
     }
     else if(std::string(argv[1]) == "release" || std::string(argv[1]) == "-r"){
         return handleReleaseOption(argv, argc);
+    }
+    else if(std::string(argv[1]) == "run" || std::string(argv[1]) == "-e"){
+        handleRunOption(argv, argc);
     }
     else if(std::string(argv[1]) == "config"){
         handleConfigOption(argv, argc);
