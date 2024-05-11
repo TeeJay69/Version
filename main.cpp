@@ -499,6 +499,74 @@ inline void handleConfigOption(char* argv[], int argc){
     }
 }
 
+inline void handleRunOption(char* argv[], int argc){
+    if(argv[2] == NULL){
+        if(std::filesystem::exists(".versiontool")){
+            std::cout << "Running project..." << std::endl;
+            configFileParser CP(".versiontool");
+            CP.configCheck();
+            const std::string com = CP.readCompileCommand();
+            std::string outName = extractOutputName(com);
+            if(outName.empty()){
+                outName = "a.exe";
+            }
+
+            const std::string runCom = "cmd /c \".\\" + outName;
+            int retVal = std::system(runCom.c_str());
+            std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
+            std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
+        }
+        else{
+            std::cerr << "Either provide a path or run without path inside the repo to execute the current project.";
+        }
+    }
+    else if(std::filesystem::exists(std::string(argv[2]))){
+        std::cout << "File: " << std::string(argv[2]) << std::endl;
+        std::string runCom;
+        if(argv[4] == NULL){
+            runCom = "cmd /c \"" + std::string(argv[2]) + "\"";
+        }
+        else{
+            runCom = "cmd /c \"" + std::string(argv[2]) + "\" " + std::string(argv[3]);
+            std::cout << "Args: '" << std::string(argv[3]) << "'" << std::endl;
+        }
+        int retVal = std::system(runCom.c_str());
+        std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
+        std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
+    }
+    else if(std::filesystem::exists(".versiontool")){
+        std::cout << "Running project with arguments..." << std::endl;
+        configFileParser CP(".versiontool");
+        const std::string com = CP.readCompileCommand();
+        std::string outName = extractOutputName(com);
+        if(outName.empty()){
+            outName = "a.exe";
+        }
+        std::cout << "File: " << outName << std::endl;
+        std::cout << "Args: '" << std::string(argv[2]) << "'" << std::endl;
+        std::cout << "Output:" << std::endl;
+        const std::string runCom = "cmd /c \"" + outName + "\" " + std::string(argv[2]);
+        int retVal = std::system(runCom.c_str());
+        std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
+        std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
+    }
+    else{
+        std::cout << "File: " << std::string(argv[2]) << std::endl;
+        std::string runCom;
+        if(argv[3] == NULL){
+            runCom = "cmd /c \"" + std::string(argv[2]) + "\"";
+        }
+        else{
+            std::cout << "Args: '" << std::string(argv[3]) << "'" << std::endl;
+            runCom = "cmd /c \"" + std::string(argv[2]) + "\" " + std::string(argv[3]);
+        }
+        std::cout << "Output:" << std::endl;
+        int retVal = std::system(runCom.c_str());
+        std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
+        std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
+    }
+}
+
 int main(int argc, char* argv[]){
     WCHAR wchr[ MAX_PATH ];
     GetModuleFileNameW(NULL, wchr, MAX_PATH);
@@ -530,7 +598,7 @@ int main(int argc, char* argv[]){
         std::cout << "Options:" << std::endl;
         std::cout << "compile, -c [COMMAND]                     Compile project using either provided command or file (.versiontool).\n";
         std::cout << "    --run, -r                             Executes the program after building.\n";
-        std::cout << "run, -e                                   Executes the program.\n";
+        std::cout << "run, -e [PATH] [ARGUMENTS]                Executes the program with or without arguments or when not specified, the program from the file (.versiontool).\n";
         std::cout << "release, -r [VERSION]                     Create a release (+ Setup.exe if ISS.iss file present (changes version name)).\n";
         std::cout << "config                                    Display config.\n";
         std::cout << "    --raw, -r                             Open config file in editor.\n";
