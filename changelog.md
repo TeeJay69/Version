@@ -1,3 +1,29 @@
+# v2.2.0
+### Run finished build
+- Syntax `--run, -r --args, -a`
+- Execute project after building using `version compile --run`
+- Support for arguments when running `version compile --run --args "--help"`
+- Displays return value of program
+- Examples:
+    - `version compile --run`
+    > Builds the project and runs it`
+    - `version compile --run --args "--version"`
+    > Builds the project and runs it with `--version` argument
+### Run project or any program
+- Syntax: `run, -e [PATH] [ARGUMENTS]`
+- Executes the PATH with ARGUMENTS or when not specified, the current project from the .versiontool file.
+- Displays return value
+- Examples: 
+    - `version run "--help"`
+    - `version run`
+    > Run without arguments
+    - `version run dir "\L"`
+    > Executes `dir` with `\L` parameter
+    - `version run "c:\windows\system32\notepad"`
+    > Executes notepad
+    - `version run "c:\users\<username>\appdata\local\configsync\configsync.exe" "sync -a"`
+    > Executes `configsync` with `sync -a`
+
 # v2.1.2
 ### Fix ISS file version update
 - Version was not correctly updated

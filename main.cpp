@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.2.1"
+#define VERSION "v2.2.0"
 
 #ifdef _WIN32 
 

@@ -3,7 +3,7 @@ main.cpp
 changelog.md
 ----------
 Compile command:
-g++ main.cpp -o version-2.exe -O3
+g++ main.cpp -o version.exe -O3
 ----------
 Alias:
 ----------
