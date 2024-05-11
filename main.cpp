@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.2.2"
+#define VERSION "v2.2.1"
 
 #ifdef _WIN32 
 
@@ -163,6 +163,17 @@ static int argcmp(char** argv, int argc, const char* cmp){
     return 0;
 }
 
+static int argfcmp(std::string& buff, char** argv, int argc, const char* cmp){
+    for(int i = 0; i < argc; i++){
+        if(strcmp(argv[i], cmp) == 0){
+            if(i + 1 < argc){
+                buff = argv[i+1]; // I dunno if we have to resize buff before assigning, we'll see if it fails...
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 void exitSignalHandler(int signal){
     
     std::cout << "Ctrl+C caught, initiating exit procedure" << ANSI_COLOR_RESET << std::endl << std::flush;
@@ -288,15 +299,15 @@ inline void handleCompileOption(char* argv[], int argc){
     else if(argcmp(argv, argc, "--run") || argcmp(argv, argc, "-r")){
         std::string com;
         if(std::string(argv[2]) == "--run" || std::string(argv[2]) == "-r"){
-            if(argv[3] == NULL){
+            if(argv[3] == NULL || std::string(argv[3]) == "--args" || std::string(argv[3]) == "-a"){
                 configFileParser CP(".versiontool");
                 com = CP.readCompileCommand();
             }
-            else if(checkCompileCom(std::string(argv[3])) == 1){
+            else if(std::string(argv[3]) != "--args" && std::string(argv[3]) != "-a" && checkCompileCom(std::string(argv[3])) == 1){
                 com = std::string(argv[3]);
             }
             else{
-                std::cerr << "Fatal: Provided command is invalid." << std::endl;
+                std::cerr << "Fatal: Provided command is invalid";
             }
         }
         else if(checkCompileCom(std::string(argv[2])) == 1){
@@ -319,7 +330,16 @@ inline void handleCompileOption(char* argv[], int argc){
         if(outName.empty()){
             outName = "a.exe";
         }
-        const std::string runCom = "cmd /c \".\\" + outName;
+
+        std::string args;
+        std::string runCom;
+        if(argfcmp(args, argv, argc, "--args") || argfcmp(args, argv, argc, "-a")){
+            std::cout << "Args: '" << args << "'" << std::endl;
+            runCom = "cmd /c \".\\" + outName + " " + args;
+        }
+        else{
+            runCom = "cmd /c \".\\" + outName;
+        }
         int retVal = std::system(runCom.c_str());
         std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
         std::cout << "Return value: " << ANSI_COLOR_169 << retVal << ANSI_COLOR_RESET << std::endl;
@@ -598,6 +618,7 @@ int main(int argc, char* argv[]){
         std::cout << "Options:" << std::endl;
         std::cout << "compile, -c [COMMAND]                     Compile project using either provided command or file (.versiontool).\n";
         std::cout << "    --run, -r                             Executes the program after building.\n";
+        std::cout << "        --args, -a                        Specific arguments for '--run'.\n";
         std::cout << "run, -e [PATH] [ARGUMENTS]                Executes the program with or without arguments or when not specified, the program from the file (.versiontool).\n";
         std::cout << "release, -r [VERSION]                     Create a release (+ Setup.exe if ISS.iss file present (changes version name)).\n";
         std::cout << "config                                    Display config.\n";
