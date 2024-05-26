@@ -1,3 +1,8 @@
+# v2.3.0
+### Kill project during exit procedure
+- When the project is run with either 'run' or 'version compile --run' the exit procedure that is executed on 'Ctrl + C' kills the project before exiting.
+- Any other files that are run with 'version run <path>' will not be killed during the exit procedure. The change affects only the project from the .versiontool file. 
+
 # v2.2.0
 ### Run finished build
 - Syntax `--run, -r --args, -a`

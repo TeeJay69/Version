@@ -19,7 +19,7 @@
 #define Debug_Mode 0
 #endif
 
-#define VERSION "v2.2.0"
+#define VERSION "v2.3.0"
 
 #ifdef _WIN32 
 
@@ -40,6 +40,7 @@ void enableColors()
 
 
 std::string pLocat;
+std::string builtProg;
 
 class configFileParser{
     private:
@@ -177,6 +178,15 @@ static int argfcmp(std::string& buff, char** argv, int argc, const char* cmp){
 void exitSignalHandler(int signal){
     
     std::cout << "Ctrl+C caught, initiating exit procedure" << ANSI_COLOR_RESET << std::endl << std::flush;
+    if(!builtProg.empty()){
+        const std::string runCom = "cmd /c taskkill /IM " + builtProg; 
+        if(std::system(runCom.c_str()) != 0){
+            std::cerr << "Failed to kill " << builtProg << std::endl;
+        }
+        else{
+            std::cout << "Killed " << builtProg << std::endl;
+        }
+    }
     std::cout << "Exit procedure finished!" << std::endl << std::flush;
     std::exit(signal);
 }
@@ -330,6 +340,7 @@ inline void handleCompileOption(char* argv[], int argc){
         if(outName.empty()){
             outName = "a.exe";
         }
+        builtProg = outName;
 
         std::string args;
         std::string runCom;
@@ -530,7 +541,8 @@ inline void handleRunOption(char* argv[], int argc){
             if(outName.empty()){
                 outName = "a.exe";
             }
-
+            
+            builtProg = outName;
             const std::string runCom = "cmd /c \".\\" + outName;
             int retVal = std::system(runCom.c_str());
             std::cout << ANSI_COLOR_GREEN << "Program executed." << ANSI_COLOR_RESET << std::endl;
@@ -562,6 +574,7 @@ inline void handleRunOption(char* argv[], int argc){
         if(outName.empty()){
             outName = "a.exe";
         }
+        builtProg = outName;
         std::cout << "File: " << outName << std::endl;
         std::cout << "Args: '" << std::string(argv[2]) << "'" << std::endl;
         std::cout << "Output:" << std::endl;
