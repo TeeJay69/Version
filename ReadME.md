@@ -1,4 +1,4 @@
-# version
+# Version
 
 **A simple yet powerful C++ command-line tool for compiling, running, and releasing your projects.**  
 Originally called **versiontool**, this project has evolved into a robust utility that I regularly use to manage my builds and project releases.
