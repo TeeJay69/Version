@@ -62,7 +62,7 @@ Command line arguments:
 
 # Feature requests:
 [ ] argument to show all existing releases
-
+- [ ] Timer operand alongside run operand, to kill the project after x amount of time 
 # Parking Lot:
 <!--
 inline void updateVersion(const std::string& filepath, const std::string& newVersion) {
